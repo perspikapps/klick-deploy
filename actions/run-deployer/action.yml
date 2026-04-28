@@ -1,0 +1,116 @@
+# @format
+
+name: 'Run PHP Deployer'
+description: 'Setup  & run PHP Deployer'
+branding:
+  icon: 'check'
+  color: 'blue'
+inputs:
+  version:
+    description: 'The version of Deployer to install. If not specified, the latest version will be used.'
+    required: false
+  dep:
+    description: 'The deployer command to run. If not specified, the default is "deploy".'
+    required: true
+    default: 'deploy'
+  options:
+    description: 'Options to pass to the deployer command.'
+    required: false
+  selector:
+    description: 'The selector to use for the deployer command. If not specified, the default is "all".'
+    required: false
+    default: 'all'
+  environment:
+    description: 'The environment to use for the deployer command. If not specified, the default is determined by git branch.'
+    required: false
+    default: ''
+  ssh-private-key:
+    description: 'SSH private key for deployment'
+    required: true
+  known-hosts:
+    description: 'Known hosts for SSH'
+    required: true
+    default: ''
+  ssh-config:
+    description: 'SSH configuration'
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Check environment
+      id: check
+      shell: bash
+      run: |
+        (
+          command -v rsync &> /dev/null && echo "rsync=true" || echo "rsync=false" 
+          command -v php &> /dev/null && echo "php=true" || echo "php=false"
+          test -d vendor && echo "packages=true" || echo "packages=false"
+        ) >> $GITHUB_OUTPUT
+
+      # Setup PHP if it is not already installed
+    - name: Setup PHP
+      if: ${{ steps.check.outputs.php == 'false' }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version || '8.3' }}
+        extensions: mbstring, intl, zip, xml, curl, gd
+      env:
+        update: true
+    # Install Composer dependencies if the vendor directory is missing
+    - name: Install Composer Dependencies
+      if: ${{ steps.check.outputs.packages == 'false' }}
+      uses: ramsey/composer-install@v3
+      with:
+        composer-options: '--no-dev'
+        require-lock-file: true
+
+    # Install deployer/deployer globally and add it to the path
+    - name: Install Deployer
+      shell: sh
+      run: |
+        if [ -z "${{ inputs.version }}" ]; then
+          echo "No version specified, installing the latest version of Deployer"
+          composer global require deployer/deployer
+        else
+          echo "Installing Deployer version ${{ inputs.version }}"
+          composer global require deployer/deployer:${{ inputs.version }}
+        fi
+        echo "Adding Deployer to PATH"
+        echo "$HOME/.composer/vendor/bin" >> $GITHUB_PATH
+
+    # Add the SSH private key to the SSH agent
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ inputs.ssh-private-key }}
+        known_hosts: ${{ inputs.known-hosts }}
+        config: ${{ inputs.ssh-config }} # ssh_config; optional
+        if_key_exists: ignore # replace / ignore / fail
+
+    # Run the deployer command
+    - name: Run Deployer on pull_request review_requested
+      if: ${{ github.event_name == 'pull_request' && github.event.action == 'review_requested' }}
+      shell: sh
+      run: |
+        echo "Running Deployer command: ${{ inputs.dep }} with selector ${{ inputs.selector || 'all' }} and environment ${{ inputs.environment || 'unstable' }}"
+        $HOME/.composer/vendor/bin/dep ${{ inputs.dep }} ${{ inputs.options }} --branch=${{ github.sha  }} --  ${{ inputs.selector || 'all' }}\&env=${{ inputs.environment || 'unstable'}}
+
+    - name: Run Deployer on release branches
+      if: ${{ startsWith(github.ref, 'refs/heads/release') }}
+      shell: sh
+      run: |
+        echo "Running Deployer command: ${{ inputs.dep }} with selector ${{ inputs.selector || 'all' }} and environment ${{ inputs.environment || 'staging' }}"
+        $HOME/.composer/vendor/bin/dep ${{ inputs.dep }} ${{ inputs.options }} --branch=${{ github.ref_name }} --  ${{ inputs.selector || 'all' }}\&env=${{ inputs.environment || 'staging'}}
+    - name: Run Deployer on tags with pre-release identifiers
+      if: ${{ startsWith(github.ref, 'refs/tags/') && contains(github.ref_name, '-') }}
+      shell: sh
+      run: |
+        echo "Running Deployer command: ${{ inputs.dep }} with selector ${{ inputs.selector || 'all' }} and environment ${{ inputs.environment || 'staging' }}"
+        $HOME/.composer/vendor/bin/dep ${{ inputs.dep }} ${{ inputs.options }} --tag=${{ github.ref_name }} -- ${{ inputs.selector || 'all' }}\&env=${{ inputs.environment || 'staging'}}
+    - name: Run Deployer on tags without pre-release identifiers
+      if: ${{ startsWith(github.ref, 'refs/tags/') && !contains(github.ref_name, '-') }}
+      shell: sh
+      run: |
+        echo "Running Deployer command: ${{ inputs.dep }} with selector ${{ inputs.selector || 'all' }} and environment ${{ inputs.environment || 'production' }}"
+        $HOME/.composer/vendor/bin/dep ${{ inputs.dep }} ${{ inputs.options }} --tag=${{ github.ref_name }} -- ${{ inputs.selector || 'all' }}\&env=${{ inputs.environment || 'production'}}

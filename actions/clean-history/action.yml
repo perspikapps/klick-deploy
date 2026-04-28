@@ -1,0 +1,28 @@
+# @format
+
+name: 'Cleanup past deployment'
+description: 'Remove all past deployments'
+branding:
+  icon: 'check'
+  color: 'blue'
+inputs:
+  workflows:
+    description: 'Comma separated list of workflow files to delete'
+    required: false
+    default: ''
+  status:
+    description: 'Comma separated list of workflow status to delete'
+    required: false
+    default: ''
+  older:
+    description: 'Specify the number of days to delete workflow runs older than this value'
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Run Delete Script with List
+      if: ${{ inputs.workflows != '' }}
+      shell: sh
+      run: |
+        ${{ github.action_path }}/delete.sh  ${{ inputs.older != '' && '-o' }} ${{ inputs.older }} ${{ inputs.workflows != '' && '-w' }} ${{ inputs.workflows }} ${{ inputs.status != '' && '-s' }} ${{ inputs.status }}
