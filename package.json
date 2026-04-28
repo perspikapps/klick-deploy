@@ -1,89 +1,93 @@
 {
-    "private": true,
+    "name": "@perspikapps/laravel-envribbon",
     "repository": {
-        "url": "https://github.com/perspikapps/php-easy-deployer.git"
-    },
-    "dependencies": {},
-    "devDependencies": {
-        "@commitlint/cli": "^11.0.0",
-        "@commitlint/config-conventional": "^11.0.0",
-        "@commitlint/core": "^11.0.0",
-        "commitiquette": "^1.0.8",
-        "commitizen": "^4.2.2",
-        "conventional-changelog-cli": "^2.1.0",
-        "cross-env": "^7.0",
-        "devmoji": "^2.1.10",
-        "env-cmd": "^10.1.0",
-        "git-precommit-checks": "^3.0.6",
-        "husky": "^4.3.0",
-        "lint-staged": "^10.5.0",
-        "lodash": "^4.17.20",
-        "maildev": "^1.1.0",
-        "npm-run-all": "^4.1.5",
-        "prettier": "^2.1.2",
-        "standard-version": "^9.0.0",
-        "subpkg": "^4.1.0"
-    },
-    "peerDependencies": {
-        "ntl": "^5.1.0",
-        "dotnet-run": "1.3.1",
-        "vue": "^2.6.12",
-        "vue-template-compiler": "^2.6.12"
+        "url": "https://github.com/perspikapps/laravel-envribbon.git"
     },
     "scripts": {
-        "lint": "lint-staged",
-        "postlint": "subpkg run lint",
-        "postinstall": "subpkg install",
-        "update": "npx npm-check-updates -i -u",
-        "postupdate": "subpkg run update",
-        "init": "run-s -c init:* git:version:inst lint",
-        "init:gitflow": "git flow init -d -f && (git branch develop || echo skip) && git checkout develop",
-        "init:husky": "husky install",
-        "release": "npm run git:version:shell -- npm run git:ifclean -- standard-version --release-as $SemVer",
-        "release:push": "npm run release && git push",
-        "release:first": "standard-version --first-release",
-        "git:list": "git log --graph --pretty=\"format:%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset\" --abbrev-commit --decorate --date=short --color develop@{push}.. | devmoji --log --color",
-        "git:amend": "run-s git:check && (git diff-index --cached --quiet HEAD || git commit --no-verify --amend -C HEAD)",
-        "git:amend:push": "npm run git:amend && git push --force",
-        "git:check": "git-precommit-checks && lint-staged",
-        "git:commit": "cross-env GIT_EDITOR=: git commit",
-        "git:commit:push": "npm run git:commit && git push",
-        "git:ifclean": "(git fetch --dry-run && git diff-index --quiet HEAD -- || chalk red bold \"Repo not clean, cannot continue\" && exit 0)  && chalk green bold \"Repo is clean, proceed\" && cross-env-shell",
-        "git:version:install": "dotnet tool install -g gitversion.tool",
-        "git:version:shell": "dotnet-gitversion > .git/version.json && env-cmd -f .git/version.json -x cross-env-shell",
-        "flow:feature:start": "npm run git:ifclean -- git flow feature start",
-        "flow:feature:finish": "npm run git:ifclean -- git flow feature finish",
-        "flow:release:start": "npm run git:version:shell -- npm run git:ifclean -- git flow release start $MajorMinorPatch",
-        "flow:release:finish": "npm run git:ifclean -- git flow release finish -m Release",
-        "flow:hotfix:start": "npm run git:ifclean -- git flow hotfix start from-$npm_package_version",
-        "flow:hotfix:finish": "npm run git:ifclean -- git flow hotfix finish -m Hotfix'",
-        "flow:bugfix:start": "npm run git:ifclean -- git flow bugfix start",
-        "flow:bugfix:finish": "npm run git:ifclean -- git flow bugfix finish'"
+        "lint": "npx --yes lint-staged",
+        "release": "npx --yes commit-and-tag-version --no-verify --",
+        "test": "echo \"Warning: no test specified\"",
+        "update": "npx --yes npm-check-updates -i -u",
+        "update-all": "npm run update -ws --root"
     },
-    "subPackages": [],
     "config": {
         "commitizen": {
-            "path": "commitiquette"
+            "path": "@commitlint/cz-commitlint"
         }
     },
-    "husky": {
-        "hooks": {
-            "pre-commit": "git-precommit-checks && lint-staged",
-            "prepare-commit-msg": "[[ $(grep -cv -e '^#' -e '^$' .git/COMMIT_EDITMSG) -eq 0 ]] && (exec < /dev/tty && git cz --hook && devmoji -e || echo skip commit) || echo skip prepare",
-            "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-        }
-    },
-    "lint-staged": {
-        "*.{js,jsx,ts,tsx,md,html,css,json,vue}": [
-            "prettier --write"
+    "prettier": {
+        "insertPragma": true,
+        "overrides": [
+            {
+                "files": "*.yml",
+                "options": {
+                    "useTabs": true,
+                    "tabWidth": 2
+                }
+            }
         ],
-        "*.php": [
-            "composer lint"
+        "plugins": [
+            "prettier-plugin-sh"
+        ],
+        "semi": false,
+        "singleQuote": true,
+        "tabWidth": 4,
+        "trailingComma": "es5"
+    },
+    "commit-and-tag-version": {
+        "bumpFiles": [
+            {
+                "filename": "composer.json",
+                "type": "json"
+            },
+            {
+                "filename": "package.json",
+                "type": "json"
+            },
+            {
+                "filename": "VERSION",
+                "type": "plain-text"
+            }
+        ],
+        "types": [
+            {
+                "section": "Features",
+                "type": "feat"
+            },
+            {
+                "section": "Bug Fixes",
+                "type": "fix"
+            },
+            {
+                "hidden": true,
+                "type": "chore"
+            },
+            {
+                "hidden": true,
+                "type": "docs"
+            },
+            {
+                "hidden": true,
+                "type": "style"
+            },
+            {
+                "hidden": true,
+                "type": "refactor"
+            },
+            {
+                "hidden": true,
+                "type": "perf"
+            },
+            {
+                "hidden": true,
+                "type": "test"
+            }
         ]
     },
     "commitlint": {
         "extends": [
-            "@commitlint/config-conventional"
+            "@commitlint/config-conventional",
+            "@commitlint/config-workspace-scopes"
         ],
         "rules": {
             "subject-case": [
@@ -94,57 +98,33 @@
                     "pascal-case",
                     "upper-case"
                 ]
-            ],
-            "scope-enum": [
-                2,
-                "always",
-                [
-                    "deps",
-                    "release",
-                    "security",
-                    "i18n",
-                    "config",
-                    "add",
-                    "remove",
-                    "breaking",
-                    "auth",
-                    "ui-ux",
-                    "api",
-                    "model"
-                ]
             ]
         }
     },
     "git-precommit-checks": {
         "rules": [
             {
-                "message": "You’ve got leftover conflict markers",
+                "message": "You've got leftover conflict markers",
                 "regex": "/^[<>|=]{4,}/m"
             },
             {
+                "filter": "(^package\\.json|\\.git-precommit-checks.json)$",
                 "message": "You have unfinished devs",
                 "nonBlocking": "true",
                 "regex": "(?:FIXME|TODO)"
             }
         ]
     },
-    "prettier": {
-        "trailingComma": "es5",
-        "tabWidth": 4,
-        "semi": false,
-        "singleQuote": true,
-        "insertPragma": true
-    },
-    "standard-version": {
-        "bumpFiles": [
-            {
-                "filename": "composer.json",
-                "type": "json"
-            },
-            {
-                "filename": "VERSION",
-                "type": "plain-text"
-            }
+    "lint-staged": {
+        "*.json": [
+            "normalize-json -c -w -a -i -f local -l true",
+            "npx --yes prettier --write"
+        ],
+        "*.php": [
+            "composer lint"
+        ],
+        "*.{js,jsx,ts,tsx,md,html,css,vue,yaml,yml}": [
+            "npx --yes prettier --write"
         ]
     }
 }

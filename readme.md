@@ -1,75 +1,64 @@
 <!-- @format -->
 
-# Easy Deployer
+# Laravel Env Ribbon
 
-[![Packagist](https://img.shields.io/packagist/v/perspikapps/php-easy-deployer.svg)](https://packagist.org/packages/perspikapps/php-easy-deployer)
-[![Packagist](https://poser.pugx.org/perspikapps/php-easy-deployer/d/total.svg)](https://packagist.org/packages/perspikapps/php-easy-deployer)
-[![Packagist](https://img.shields.io/packagist/l/perspikapps/php-easy-deployer.svg)](https://packagist.org/packages/perspikapps/php-easy-deployer)
+[![Packagist](https://img.shields.io/packagist/v/perspikapps/laravel-envribbon.svg)](https://packagist.org/packages/perspikapps/laravel-envribbon)
+[![Packagist](https://poser.pugx.org/perspikapps/laravel-envribbon/d/total.svg)](https://packagist.org/packages/perspikapps/laravel-envribbon)
+[![Packagist](https://img.shields.io/packagist/l/perspikapps/laravel-envribbon.svg)](https://packagist.org/packages/perspikapps/laravel-envribbon)
 
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/) [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 [![Buy me a coffee](https://badgen.net/badge/buymeacoffe/tomgrv/yellow?icon=buymeacoffee)](https://buymeacoffee.com/tomgrv)
 
-This package handles deployement configuration via a `deploy.yaml` file to define deploy strategy and a `.hostmap` file to define target strategy
+This package displays automaticaly a top-left corner ribbon with APP_ENV value & version number on all pages, depending on APP_ENV value & associated config:
+
+![capture](./doc/assets/capture.png)
 
 ## Installation
 
 Install via composer
 
 ```bash
-composer require perspikapps/php-easy-deployer
+composer require perspikapps/laravel-envribbon
+```
+
+### Publish package assets
+
+```bash
+php artisan vendor:publish --provider="Perspikapps\LaravelEnvRibbon\EnvRibbonServiceProvider"
 ```
 
 ## Usage
 
-Deployment is handled by [deployphp/deployer](https://github.com/deployphp/deployer) package.
+Version is handled by [avto-dev/app-version-laravel](https://github.com/avto-dev/app-version-laravel) package: fill in `VERSION` file at project root.
 
-### deploy.yaml
+Fill in configuration according to your needs:
 
-_See [deployer](https://github.com/deployphp/deployer) config for details_
+```php
+return [
 
-```yaml
-import:
-    - vendor/perspikapps/php-easy-deployer/src/strategy_laravel.php
-    - vendor/perspikapps/php-easy-deployer/src/strategy_upload.php
-    - vendor/perspikapps/php-easy-deployer/src/strategy_update.php
-    - vendor/perspikapps/php-easy-deployer/src/strategy_shared.php
-    - vendor/perspikapps/php-easy-deployer/src/strategy.php
+    'enabled' => env('APP_RIBBON', true),
 
-config:
-    source_path: './'
-    shared_dirs:
-        - storage
-    shared_files:
-        - .env
-    writable_dirs:
-        - bootstrap/cache
-        - storage
-        - storage/app
-        - storage/app/public
-        - storage/framework
-        - storage/framework/cache
-        - storage/framework/sessions
-        - storage/framework/views
-        - storage/logs
-    log_files:
-        - storage/logs/*.log
-```
+    'environments' => [
 
-### .hostname
+        'production' => [
+            'visible' =>
+            env('APP_DEBUG', false),
+            'color' => 'limeGreen',
+        ],
 
-Specify ONE deployement target per line as url:
+        'staging' => [
+            'visible' => true,
+            'color' => 'darkorange',
+        ],
 
--   url scheme = strategies to activate (`+` separated, each must be loaded in `import` section of `deploy.yaml` file)
--   url user/host/port = server to deploy to
--   url path = path on server to deploy to
--   url query = deploy options to use
--   url anchor = variables to set in .env file after deployment
+        '*' => [
+            'visible' => true,
+            'color' => 'crimson',
+        ]
+    ]
 
-```ini
-upload+laravel://user@dev.exemple.com/var/home/{{hostname}}?bin/php=/opt/plesk/php/7.4/bin/php&writable_mode=chmod#debug=true&env=staging
-upload+laravel://user@beta.exemple.com/var/home/{{hostname}}?bin/php=/opt/plesk/php/7.4/bin/php&writable_mode=chmod#debug=true&env=beta
-upload+laravel://user@www.exemple.com/var/home/{{hostname}}?bin/php=/opt/plesk/php/7.4/bin/php&writable_mode=chmod#debug=false&env=production
+];
 ```
 
 ## Security
@@ -80,4 +69,4 @@ instead of using the issue tracker.
 ## Credits
 
 -   [tomgrv](https://github.com/tomgrv)
--   [deployphp](https://github.com/deployphp)
+-   [avto-dev](https://github.com/avto-dev)
