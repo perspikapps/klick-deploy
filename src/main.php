@@ -13,12 +13,10 @@ require_once __DIR__.'/tasks/upload_assets.php'; // Tasks for uploading assets
 require_once __DIR__.'/tasks/artisan.php'; // Override artisan:migrate for alpha env reset
 require_once __DIR__.'/tasks/auto_unlock.php'; // Force deploy:unlock after failed alpha deployments
 
-// Set the number of releases to keep on the server
-if (function_exists('isUnstable') && isUnstable()) {
-    set('keep_releases', 0);
-} else {
-    set('keep_releases', 2);
-}
+// Set the number of releases to keep on the server (evaluated per-host at task execution time)
+set('keep_releases', function () {
+    return isUnstable() ? 0 : 2;
+});
 
 // Define the source path for the deployment
 set('source_path', './');

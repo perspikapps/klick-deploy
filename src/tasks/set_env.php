@@ -256,6 +256,10 @@ task('deploy:set_env', function () {
     }
 
     foreach (resolveHostSecrets($hostSecrets) as $key => $secret) {
+        if (! preg_match('/^[A-Z0-9_]+$/', $key)) {
+            throw new RuntimeException("Invalid secret key [{$key}]: must match ^[A-Z0-9_]+\$.");
+        }
+
         $value = $secret['value'];
 
         if ($secret['encrypted'] === true) {

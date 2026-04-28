@@ -30,11 +30,7 @@ _See [deployer](https://github.com/deployphp/deployer) config for details_
 
 ```yaml
 import:
-    - vendor/perspikapps/klick-deploy/src/strategy_laravel.php
-    - vendor/perspikapps/klick-deploy/src/strategy_upload.php
-    - vendor/perspikapps/klick-deploy/src/strategy_update.php
-    - vendor/perspikapps/klick-deploy/src/strategy_shared.php
-    - vendor/perspikapps/klick-deploy/src/strategy.php
+    - vendor/perspikapps/klick-deploy/src/main.php
 
 config:
     source_path: './'

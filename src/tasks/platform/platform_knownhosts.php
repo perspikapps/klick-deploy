@@ -3,10 +3,10 @@
 namespace Deployer;
 
 /**
- * Task to set environment variables on the remote server.
+ * Task to ensure the remote hostname is present in the local SSH known_hosts file.
  *
- * This task iterates over the labels of the current host and updates the environment variables accordingly.
- * It ensures that essential environment variables such as APP_KEY and APP_URL are set.
+ * This task checks whether the remote host is already in known_hosts, and if not,
+ * uses ssh-keyscan to add it, enabling non-interactive SSH connections.
  */
 desc('Ensure known hosts are set');
 task('platform:knownhosts', function () {

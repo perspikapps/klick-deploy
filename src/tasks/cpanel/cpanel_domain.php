@@ -77,11 +77,11 @@ task('cpanel:subdomain', function () {
         throw new RuntimeException('Subdomain <fg=bright-magenta>'.$alias.'</> cannot be empty.');
     }
 
-    // Check if the root domain exists in the main domain or subdomains
-    $idx = ($domains->data->main_domain->domain ?? null) == $rootdomain || searchDomain($domains->data->addon_domains, $rootdomain);
+    // Check if the root domain exists in the main domain or addon domains
+    $rootExists = (($domains->data->main_domain->domain ?? null) == $rootdomain) || (searchDomain($domains->data->addon_domains, $rootdomain) !== false);
 
     // If the root domain does not exist, throw an error
-    if (! $idx) {
+    if (! $rootExists) {
         throw new RuntimeException('Subdomain <fg=bright-magenta>'.$alias."</> does not have a root domain defined on this server.\nPlease check the domain configuration.");
     }
 

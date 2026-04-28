@@ -71,20 +71,8 @@
         "lock": [
             "composer validate --no-check-all --strict 2>&1 | grep -oP 'Required package \"\\K[^\"]+' | while read -r package; do composer require --ignore-platform-reqs --no-scripts --no-interaction --no-progress --no-install \"$package\"; done; composer update --lock --ignore-platform-reqs --no-scripts --no-interaction --no-progress --no-install"
         ],
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-        ],
+        "post-autoload-dump": [],
+        "post-update-cmd": [],
         "req": [
             "composer require --ignore-platform-reqs --with-all-dependencies"
         ],

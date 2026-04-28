@@ -24,13 +24,16 @@ function uapi($module, $function, $args, $token = null)
         $args = '';
     } else {
         $args = array_map(function ($key, $value) {
-            return "$key=$value";
+            return escapeshellarg($key.'='.$value);
         }, array_keys($args), $args);
 
         $args = implode(' ', $args);
     }
 
-    $result = json_decode(run("uapi --output=json $module $function ".$args))->result;
+    $escapedModule = escapeshellarg($module);
+    $escapedFunction = escapeshellarg($function);
+
+    $result = json_decode(run("uapi --output=json $escapedModule $escapedFunction ".$args))->result;
 
     if (isset($result->errors) && ! empty($result->errors)) {
         // Log and throw if API returns errors

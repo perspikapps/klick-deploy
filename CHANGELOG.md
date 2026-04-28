@@ -14,7 +14,6 @@ All notable changes to `klick-deploy` will be documented in this file.
     - Crontab setup runs automatically just before deployment unlock
     - Jobs are properly configured to use the current deployment path
 - New platform task `platform:crontab` for manual crontab configuration
-- New platform task `platform:crontab:remove` for cleaning up crontab jobs
 
 ### Changed
 

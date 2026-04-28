@@ -33,12 +33,12 @@ task('deploy:upload_assets', function () {
     $escapedTarget = escapeshellarg($target);
     $escapedBare = escapeshellarg($bare);
     $escapedGit = escapeshellarg($git);
-    $local = runLocally("git rev-parse $escapedTarget"); // Get the local SHA for the target
-    $remote = run("$escapedGit --git-dir=$escapedBare rev-parse $escapedTarget"); // Get the remote SHA for the same target
+    $local = trim(runLocally("$escapedGit rev-parse $escapedTarget")); // Get the local SHA for the target
+    $remote = trim(run("$escapedGit --git-dir=$escapedBare rev-parse $escapedTarget")); // Get the remote SHA for the same target
 
     // Ensure the local and remote repositories are aligned
     // If they are not aligned, throw an exception to prevent uploading mismatched assets.
-    if ($local != $remote) {
+    if ($local !== $remote) {
         throw new Exception("Tree mismatch, cannot upload locally built assets!\nRemote: $remote <- $target\nLocal : $local <- $target");
     }
 
@@ -50,7 +50,8 @@ task('deploy:upload_assets', function () {
 
         // Check if the asset directory exists locally
         // If it does not exist, throw an exception to notify the user to build the assets first.
-        if (runLocally("test -d $path; echo $?") != 0) {
+        $escapedPath = escapeshellarg($path);
+        if (trim(runLocally("test -d $escapedPath && echo 1 || echo 0")) !== '1') {
             throw new Exception("Directory $path does not exist.\nPlease build the assets first.");
         }
 

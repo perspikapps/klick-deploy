@@ -20,7 +20,7 @@ task('platform:savepub', function () {
         // Prompt user to generate new key pair if private key is missing
         $gen = askChoice('No private key found, generating new key pair', ['no', 'yes'], 1);
         if ($gen == 'no') {
-            warn('No key pair generated, exiting');
+            warning('No key pair generated, exiting');
 
             return;
         }

@@ -45,7 +45,7 @@ runs:
         (
           command -v rsync &> /dev/null && echo "rsync=true" || echo "rsync=false" 
           command -v php &> /dev/null && echo "php=true" || echo "php=false"
-          test -d vendor && echo "packages=true" || echo "php-packages=false"
+          test -d vendor && echo "packages=true" || echo "packages=false"
         ) >> $GITHUB_OUTPUT
 
       # Setup PHP if it is not already installed

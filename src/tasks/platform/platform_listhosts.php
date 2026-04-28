@@ -3,10 +3,10 @@
 namespace Deployer;
 
 /**
- * Task to set environment variables on the remote server.
+ * Task to list the selected hosts for the current deployment.
  *
- * This task iterates over the labels of the current host and updates the environment variables accordingly.
- * It ensures that essential environment variables such as APP_KEY and APP_URL are set.
+ * This task returns the aliases of all selected hosts as a JSON array,
+ * which is useful for CI/CD pipelines that need to know which hosts will be targeted.
  */
 desc('List selected hosts');
 task('platform:listhosts', function () {

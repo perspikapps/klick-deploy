@@ -30,7 +30,8 @@ task('deploy:set_version', function () {
     }
 
     // Write the version to the VERSION file on the remote server
-    run("echo $version$build > {{release_or_current_path}}/VERSION");
+    $fullVersion = $version.$build;
+    run('printf %s '.escapeshellarg($fullVersion).' > {{release_or_current_path}}/VERSION');
 });
 
 // Run this task after setting the environment variables

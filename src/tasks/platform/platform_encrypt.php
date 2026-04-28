@@ -12,7 +12,7 @@ require_once __DIR__.'/../crypto.php';
  *
  * @desc Encrypts a user-provided value using the host's public key and verifies the result.
  */
-desc('List selected hosts');
+desc('Encrypt a value for the current host');
 task('platform:encrypt', function () {
 
     $alias = get('alias');

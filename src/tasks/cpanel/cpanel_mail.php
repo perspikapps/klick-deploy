@@ -76,11 +76,15 @@ task('cpanel:mail', function () {
     } else {
         info("Email account <fg=bright-green>{$mailerEmail}</> already exists");
 
-        $updateResult = uapi('Email', 'passwd_pop ', [
+        $updateResult = uapi('Email', 'passwd_pop', [
             'domain' => $appDomain,
             'email' => 'no-reply',
             'password' => $randomPassword,
         ]);
+
+        if ($updateResult->status !== 1) {
+            throw new \Exception("Failed to update password for email account {$mailerEmail}: ".($updateResult->errors[0] ?? 'Unknown error'));
+        }
     }
 
     // Suspend incoming mail
