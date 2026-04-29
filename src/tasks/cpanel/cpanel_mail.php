@@ -76,7 +76,7 @@ task('cpanel:mail', function () {
     } else {
         info("Email account <fg=bright-green>{$mailerEmail}</> already exists");
 
-        $updateResult = uapi('Email', 'passwd_pop ', [
+        $updateResult = uapi('Email', 'passwd_pop', [
             'domain' => $appDomain,
             'email' => 'no-reply',
             'password' => $randomPassword,
