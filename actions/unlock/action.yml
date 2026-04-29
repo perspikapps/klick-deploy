@@ -1,0 +1,39 @@
+name: 'Unlock PHP Project'
+description: 'Unlock hosts managed with Deployer'
+branding:
+  icon: 'check'
+  color: 'blue'
+inputs:
+  ssh-private-key:
+    description: 'SSH private key for deployment'
+    required: true
+    default: ""
+  known-hosts:
+    description: 'Known hosts for SSH'
+    required: true
+    default: ""
+  ssh-config:
+    description: 'SSH configuration'
+    required: false
+    default: ""
+  selector:
+    description: 'Selector for the deployment'
+    required: false
+    default: 'all'
+  environment:
+    description: 'Force deployment to a specific environment'
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Unlock Hosts
+      uses: ./packages/perspikapps/klick-deploy/actions/run-deployer
+      with:
+        dep: deploy:unlock
+        selector: ${{ inputs.selector || 'all' }}
+        environment: ${{ inputs.environment }}
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+        known-hosts: ${{ inputs.known-hosts }}
+        ssh-config: ${{ inputs.ssh-config }} # ssh_config; optional
+
