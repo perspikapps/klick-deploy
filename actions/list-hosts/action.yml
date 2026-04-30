@@ -1,0 +1,80 @@
+# @format
+
+name: 'List eligible hosts'
+description: 'List eligible hosts for deployment'
+branding:
+  icon: 'check'
+  color: 'blue'
+inputs:
+  deploy-file:
+    description: 'Path to the deploy.yml file'
+    required: true
+    default: 'deploy.yml'
+  selector:
+    description: 'Selector to filter hosts. Format: label1=value1&label2=value2'
+    required: false
+    default: 'all'
+  labels:
+    description: 'Include specified labels in the result'
+    required: false
+    default: ''
+  environment:
+    description: 'Force deployment to a specific environment'
+    required: false
+    default: ''
+outputs:
+  hosts:
+    description: 'List of hostnames'
+    value: ${{ steps.parse.outputs.hosts }}
+runs:
+  using: composite
+  steps:
+    # PR review → unstable (alpha URL, fresh DB)
+    - if: ${{ github.event_name == 'pull_request' && github.event.action == 'review_requested' }}
+      id: unstable
+      shell: sh
+      run: |
+        echo "Running in an unstable environment"
+        echo "selector=${{ inputs.selector}}\&env=${{ inputs.environment || 'unstable' }}" >> $GITHUB_OUTPUT
+    # Release branches → staging (beta URL, migration-based)
+    - if: ${{ startsWith(github.ref, 'refs/heads/release') }}
+      id: staging
+      shell: sh
+      run: |
+        echo "Running in a staging environment"
+        echo "selector=${{ inputs.selector}}\&env=${{ inputs.environment || 'staging' }}" >> $GITHUB_OUTPUT
+    # Main branch → production
+    - if: ${{ github.ref == 'refs/heads/main' }}
+      id: prod
+      shell: sh
+      run: |
+        echo "Running in a production environment"
+        echo "selector=${{ inputs.selector}}\&env=${{ inputs.environment || 'production' }}" >> $GITHUB_OUTPUT
+    # Parse the deploy file to get the hostnames
+    - name: Parse Deploy Config
+      id: parse
+      shell: sh
+      run: |
+        # Build the selector string
+        selector='${{steps.unstable.outputs.selector}}${{steps.staging.outputs.selector}}${{steps.prod.outputs.selector}}'
+
+        # Validate: at least one environment-detection step must have produced a selector,
+        # or inputs.environment must be explicitly provided.
+        if [ -z "$selector" ]; then
+          if [ -z "${{ inputs.environment }}" ]; then
+            echo "Error: No deployment environment detected. The workflow is not running on a pull_request review_requested event, a release/* branch, or the main branch. Provide the 'environment' input to override." >&2
+            exit 1
+          fi
+          # Build a fallback selector from the provided environment input
+          selector="env=${{ inputs.environment }}"
+          # Prepend any extra criteria from inputs.selector, but skip 'all' (the default
+          # no-op value) to avoid injecting a spurious key into the awk selector array.
+          if [ "${{ inputs.selector }}" != "all" ] && [ -n "${{ inputs.selector }}" ]; then
+            selector="${{ inputs.selector }}&$selector"
+          fi
+        fi
+
+        echo "Parsing deploy file: ${{ inputs.deploy-file }} with selector: $selector and labels: ${{ inputs.labels }}" 
+        hosts=$(awk -v selector="$selector" -v labels=${{ inputs.labels }} -f ${{ github.action_path }}/selector.awk ${{ inputs.deploy-file }})
+        echo "Selected hosts: $hosts"
+        echo "hosts=$hosts" >> $GITHUB_OUTPUT

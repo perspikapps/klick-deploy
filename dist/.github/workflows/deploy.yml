@@ -1,0 +1,83 @@
+# @format
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+  pull_request:
+    types:
+      - review_requested
+run-name: "${{ github.event_name == 'pull_request' && format('Publish alpha for PR #{0}', github.event.pull_request.number) || format('Publish on {0}', github.ref_name) }}"
+jobs:
+  list-hosts:
+    runs-on: ubuntu-latest
+    outputs:
+      hosts: ${{ steps.parse.outputs.hosts }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Parse Deploy Config
+        id: parse
+        uses: ./packages/perspikapps/klick-deploy/actions/list-hosts
+        with:
+          selector: ${{ vars.SELECTOR || 'all'}}
+          environment: ${{ vars.ENVIRONMENT }}
+          labels: runner
+  deploy-hosts:
+    cancel-timeout-minutes: 30
+    concurrency: deploy-${{ matrix.hosts.host }}
+    runs-on: ${{  matrix.hosts.runner || 'ubuntu-latest'  }}
+    strategy:
+      fail-fast: false
+      matrix:
+        hosts: ${{ fromJson(needs.list-hosts.outputs.hosts) }}
+    needs: list-hosts
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Get commit author email
+        id: committer
+        run: echo "email=$(git log -1 --pretty=format:'%ae')" >> "$GITHUB_OUTPUT"
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, xml, zip, curl, gd
+        env:
+          update: true
+      - name: Install Composer Dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: '--no-dev'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - name: Node Install Dependencies
+        run: npm install
+      - name: Node Build Assets
+        run: npm run build
+      - name: Deploy with perspikapps/klick-deploy
+        uses: ./packages/perspikapps/klick-deploy/actions/deploy
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-config: |
+            Host *
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+          known-hosts: ${{ secrets.KNOWN_HOSTS }}
+          environment: ${{ vars.ENVIRONMENT }}
+          selector: alias=${{ matrix.hosts.host }}\&${{ vars.SELECTOR || 'all'}}
+          default-user-mail: ${{ steps.committer.outputs.email || secrets.DEFAULT_USER_MAIL }}
+          default-user-name: ${{ secrets.DEFAULT_USER_NAME }}
+      - name: Tag Deployed Version
+        uses: ./packages/perspikapps/klick-deploy/actions/create-or-replace-ref
+        with:
+          ref: refs/tags/deploy/${{ matrix.hosts.host }}
+          sha: ${{ github.sha }}

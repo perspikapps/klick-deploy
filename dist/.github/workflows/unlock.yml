@@ -1,0 +1,29 @@
+# @format
+
+name: Unlock Hosts
+
+on:
+  workflow_dispatch:
+    inputs:
+      selector:
+        description: 'Selector to filter hosts (default: all)'
+        required: false
+        default: 'all'
+
+jobs:
+  unlock-hosts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Unlock with perspikapps/klick-deploy
+        uses: ./packages/perspikapps/klick-deploy/actions/unlock
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-config: |
+            Host *
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+          known-hosts: ${{ secrets.KNOWN_HOSTS }}
+          environment: ${{ vars.ENVIRONMENT }}
+          selector: ${{ vars.SELECTOR || 'all'}}

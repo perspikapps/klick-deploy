@@ -1,0 +1,36 @@
+# @format
+
+name: Clean Deploy History
+
+on:
+  schedule: [{ cron: '30 1 * * *' }] # Schedule to run the workflow every day at 1:30 AM
+  workflow_dispatch:
+    inputs:
+      workflows:
+        description: 'Comma separated list of workflow files to delete'
+        required: false
+        default: ''
+      status:
+        description: 'Comma separated list of workflow status to delete'
+        required: false
+        default: ''
+      older:
+        description: 'Specify the number of days to delete workflow runs older than this value'
+        required: false
+        default: ''
+
+jobs:
+  clean-history:
+    name: Clean Deploy History
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Clean with perspikapps/klick-deploy
+        uses: ./packages/perspikapps/klick-deploy/actions/clean-history
+        with:
+          workflows: ${{ github.event.inputs.workflows }}
+          status: ${{ github.event.inputs.status }}
+          older: ${{ github.event.inputs.older }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
