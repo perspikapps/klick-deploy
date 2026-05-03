@@ -1,0 +1,35 @@
+# @format
+
+name: Clean Deploy History
+
+on:
+  schedule: [{ cron: '30 1 * * *' }] # Schedule to run the workflow every day at 1:30 AM
+  workflow_dispatch:
+    inputs:
+      workflows:
+        description: 'Comma separated list of workflow files to clean (empty = all)'
+        required: false
+        default: ''
+      min_days:
+        description: 'Minimum number of days of history to keep per workflow'
+        required: false
+        default: '10'
+      min_runs:
+        description: 'Minimum number of most-recent runs to keep per workflow'
+        required: false
+        default: '10'
+
+jobs:
+  clean-history:
+    name: Clean Deploy History
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Clean History
+        uses: ./packages/tomgrv/actions/clean-history
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          workflows: ${{ inputs.workflows }}
+          min-days: ${{ inputs.min_days }}
+          min-runs: ${{ inputs.min_runs }}

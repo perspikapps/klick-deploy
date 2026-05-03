@@ -1,0 +1,41 @@
+# @format
+
+name: 'Create or Replace Ref'
+description: 'Creates a git ref (tag/branch). If it already exists, updates it to the given SHA.'
+branding:
+  icon: 'tag'
+  color: 'blue'
+inputs:
+  ref:
+    description: 'Full ref name (e.g. refs/tags/deploy/myhost)'
+    required: true
+  sha:
+    description: 'The SHA to point the ref at'
+    required: true
+  token:
+    description: 'GitHub token with contents write permission'
+    required: false
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - name: Create or Replace Ref
+      uses: actions/github-script@v8
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const { owner, repo } = context.repo;
+          const ref = '${{ inputs.ref }}';
+          const sha = '${{ inputs.sha }}';
+
+
+          try {
+            await github.rest.git.createRef({ owner, repo, ref, sha });
+            core.info(`Created ref ${ref} → ${sha}`);
+          } catch (err) {
+            if (err.status !== 422) throw err;
+            // 422 = ref already exists; force-update it
+            const shortRef = ref.replace(/^refs\//, '');
+            await github.rest.git.updateRef({ owner, repo, ref: shortRef, sha, force: true });
+            core.info(`Updated ref ${ref} → ${sha}`);
+          }

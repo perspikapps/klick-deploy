@@ -1,0 +1,74 @@
+# @format
+
+name: 'Run GitVersion'
+description: 'Run GitVersion to calculate semantic versioning'
+branding:
+  icon: 'check'
+  color: 'blue'
+inputs:
+  configFilePath:
+    description: 'Path to the GitVersion configuration file'
+    required: false
+    default: '.gitversion'
+outputs:
+  fullSemVer:
+    description: 'Full semantic version string'
+    value: ${{ steps.gitversion.outputs.fullSemVer }}
+  SemVer:
+    description: 'Semantic version string'
+    value: ${{ steps.gitversion.outputs.SemVer }}
+  Major:
+    description: 'Major version number'
+    value: ${{ steps.gitversion.outputs.Major }}
+  Minor:
+    description: 'Minor version number'
+    value: ${{ steps.gitversion.outputs.Minor }}
+  Patch:
+    description: 'Patch version number'
+    value: ${{ steps.gitversion.outputs.Patch }}
+  PreReleaseTag:
+    description: 'Pre-release tag'
+    value: ${{ steps.gitversion.outputs.PreReleaseTag }}
+  MajorMinorPatch:
+    description: 'Major.Minor.Patch version string'
+    value: ${{ steps.gitversion.outputs.MajorMinorPatch }}
+runs:
+  using: composite
+  steps:
+    # Checkout the repository with full history to ensure all commits are available
+    - name: Checkout Repository with full history
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        clean: false
+
+    # Check the environment for required tools and dependencies
+    - name: Check environment
+      id: check
+      shell: bash
+      run: |
+        (
+          command -v gitversion &> /dev/null && echo "gitversion=true" || echo "gitversion=false" 
+          command -v dotnet &> /dev/null && echo "dotnet=true" || echo "dotnet=false"           
+        ) >> $GITHUB_OUTPUT
+
+    # Setup .NET if it is not already installed
+    - name: Setup dotnet
+      if: ${{ steps.check.outputs.dotnet == 'false' }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 6.x
+
+    # Setup GitVersion if it is not already installed
+    - name: Setup GitVersion
+      if: ${{ steps.check.outputs.gitversion == 'false' }}
+      uses: gittools/actions/gitversion/setup@v0
+      with:
+        versionSpec: '5.x'
+
+    # Run GitVersion to calculate semantic versioning
+    - name: Run GitVersion
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0
+      with:
+        configFilePath: ${{ inputs.configFilePath }}
