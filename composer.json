@@ -1,60 +1,109 @@
 {
-    "name": "perspikapps/php-easy-deployer",
+    "name": "perspikapps/klick-deploy",
     "description": "A deployer.org recipe with url-based easy configuration",
     "license": "MIT",
+    "type": "library",
+    "version": "1.0.0",
+    "keywords": [
+        "laravel",
+        "deploy",
+        "deployer"
+    ],
     "authors": [
         {
             "name": "@tomgrv",
             "email": "tomgrv@users.perpikapps.fr"
         }
     ],
-    "homepage": "https://github.com/perspikapps/php-easy-deploy",
-    "keywords": [
-        "laravel",
-        "deploy",
-        "deployer"
-    ],
+    "homepage": "https://github.com/perspikapps/klick-deploy",
+    "support": {
+        "issues": "https://github.com/perspikapps/klick-deploy/issues",
+        "source": "https://github.com/perspikapps/klick-deploy"
+    },
     "require": {
-        "php": "^7.4",
-        "deployer/deployer": "7.0.*@dev"
+        "deployer/deployer": "^7.0",
+        "php": "^8.1"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^2.16",
-        "nunomaduro/phpinsights": "dev-master",
-        "orchestra/testbench": "~5 || ~6",
-        "phpunit/phpunit": "^9.0",
-        "squizlabs/php_codesniffer": "^3.5"
+        "laravel/pint": "^1.0",
+        "nunomaduro/collision": "^8.0",
+        "nunomaduro/phpinsights": "^2.12",
+        "pestphp/pest": "^4.1",
+        "pestphp/pest-plugin-arch": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
     },
+    "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "Perspikapps\\EasyDeployer\\": "src/"
+            "Perspikapps\\KlickDeploy\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Perspikapps\\EasyDeployer\\Tests\\": "tests"
+            "Perspikapps\\KlickDeploy\\Tests\\": "tests"
         }
     },
     "config": {
+        "allow-plugins": {
+            "wikimedia/composer-merge-plugin": true
+        },
+        "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true,
-        "optimize-autoloader": true
+        "sort-packages": true
     },
     "scripts": {
+        "base": [
+            "composer @additional_args --ignore-platform-reqs --with-all-dependencies --minimal-changes --ansi"
+        ],
+        "helpers": [
+            "@php artisan ide-helper:generate --ansi",
+            "@php artisan ide-helper:meta --ansi"
+        ],
+        "inst": [
+            "composer install --ignore-platform-reqs"
+        ],
+        "link": [
+            "composer config repositories.local '{\"type\": \"path\", \"url\": \"@additional_args\"}' --file composer.json"
+        ],
+        "lint": [
+            "vendor/bin/pint --ansi --dirty"
+        ],
+        "lock": [
+            "composer validate --no-check-all --strict 2>&1 | grep -oP 'Required package \"\\K[^\"]+' | while read -r package; do composer require --ignore-platform-reqs --no-scripts --no-interaction --no-progress --no-install \"$package\"; done; composer update --lock --ignore-platform-reqs --no-scripts --no-interaction --no-progress --no-install"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
         ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
         "post-update-cmd": [
-            "Illuminate\\Foundation\\ComposerScripts::postUpdate"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ],
-        "lint": [
-            "php-cs-fixer fix -v --config=.php_cs --using-cache=no"
+        "req": [
+            "composer require --ignore-platform-reqs --with-all-dependencies"
         ],
-        "lint-check": [
-            "php-cs-fixer fix -v --config=.php_cs --using-cache=no --dry-run"
+        "reqdev": [
+            "composer require --ignore-platform-reqs --with-all-dependencies --dev"
+        ],
+        "rmv": [
+            "@composer remove --ignore-platform-reqs --with-all-dependencies",
+            "@composer helpers"
         ],
         "test": [
-            "phpunit --coverage-text"
+            "vendor/bin/pest"
+        ],
+        "test-coverage": [
+            "vendor/bin/pest --coverage"
+        ],
+        "upg": [
+            "@composer update --ignore-platform-reqs --with-all-dependencies",
+            "@composer helpers"
         ]
     }
 }
